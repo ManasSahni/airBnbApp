@@ -11,4 +11,5 @@ public interface HotelService {
 
     Boolean deleteHotelById(Long id);
 
+    void activateHotel(Long id);
 }

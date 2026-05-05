@@ -2,6 +2,7 @@ package com.hotels.airBnbApp.service;
 
 import com.hotels.airBnbApp.dto.HotelDto;
 import com.hotels.airBnbApp.entity.Hotel;
+import com.hotels.airBnbApp.entity.Room;
 import com.hotels.airBnbApp.exceptions.ResourceNotFoundException;
 import com.hotels.airBnbApp.repository.HotelRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class HotelServiceImpl implements HotelService{
 
     private final HotelRepository hotelRepository;
+    private final InventoryService inventoryService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -49,5 +51,19 @@ public class HotelServiceImpl implements HotelService{
 
         hotelRepository.deleteById(id);
         return true;
+    }
+
+    @Override
+    public void activateHotel(Long id) {
+        log.info("Activating the hotel with ID : {}", id);
+        Hotel hotel = hotelRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(("Hotel with id: {} not found!" + id)));
+
+        hotel.setActive(true);
+
+        for(Room room: hotel.getRooms()) {
+            inventoryService.initialRoomForAYear(room);
+        }
     }
 }

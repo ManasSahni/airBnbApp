@@ -17,7 +17,7 @@ public class Hotel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long hotel_id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -42,4 +42,9 @@ public class Hotel {
     @Column(nullable = false)
     private Boolean active;
 
+    @ManyToOne
+    private User owner;
+
+    @OneToMany(mappedBy = "hotel")
+    private List<Room> rooms;
 }

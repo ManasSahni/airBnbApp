@@ -5,6 +5,8 @@ import com.hotels.airBnbApp.entity.Hotel;
 import com.hotels.airBnbApp.entity.Room;
 import com.hotels.airBnbApp.exceptions.ResourceNotFoundException;
 import com.hotels.airBnbApp.repository.HotelRepository;
+import com.hotels.airBnbApp.repository.RoomRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -17,6 +19,7 @@ public class HotelServiceImpl implements HotelService{
 
     private final HotelRepository hotelRepository;
     private final InventoryService inventoryService;
+    private final RoomRepository roomRepository;
     private final ModelMapper modelMapper;
 
     @Override
@@ -45,15 +48,21 @@ public class HotelServiceImpl implements HotelService{
     }
 
     @Override
-    public Boolean deleteHotelById(Long id) {
-        Boolean exists = hotelRepository.existsById(id);
-        if(!exists) throw new ResourceNotFoundException("Hotel not found with ID: " + id);
+    @Transactional
+    public void deleteHotelById(Long id) {
+        Hotel hotel = hotelRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(("Hotel with id: {} not found!" + id)));
 
+        for(Room room: hotel.getRooms()) {
+            inventoryService.deleteFutureInventories(room);
+            roomRepository.deleteById(room.getId());
+        }
         hotelRepository.deleteById(id);
-        return true;
     }
 
     @Override
+    @Transactional
     public void activateHotel(Long id) {
         log.info("Activating the hotel with ID : {}", id);
         Hotel hotel = hotelRepository
